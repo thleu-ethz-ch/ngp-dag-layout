@@ -8,7 +8,7 @@ The thesis is based on [Ben-Nun, et al., "Stateful Dataflow Multigraphs - A Data
 To run any experiments with SDFGs, they first need to be placed in the `graphs` directory of this repository with `.json` extension. 
 For example, you can store an SDFG in `graphs/gemm.json`. You can then open `sugiyama.html?graph=gemm` in the browser to see a drawing of the SDFG with the *SugiyamaLayouter*, `dagre.html?graph=gemm` with the *DagreLayouter* and `magnetic.html?graph=gemm` with the *MagneticSpringLayouter*.
 
-## Accessing local files
+## Accessing Local Files
 By default, browsers do not allow access to local files. This can be mitigated in Google Chrome by opening it with the flag '--allow-file-access-from-files' and in Mozilla Firefox by setting the flag `security.fileuri.strict_origin_policy` to `false` (in `about:config`). However, the easiest way to run everything is to clone the repository to a webserver and run it from there.
 
 ## Drawing Non-SDFGs
