@@ -42,7 +42,7 @@ export default class Bench {
         return Serializer.serializePromises(promises);
     }
 
-    public static run(f: string, loadFunction: (name: string, basePath: string) => Promise<RenderGraph>, layouter: Layouter, graphs: Array<string> = Bench.GRAPHS_ALL, renderer: Renderer = null, basePath: string = "./graphs/") {
+    public static run(f: string, loadFunction: (name: string, basePath: string) => Promise<RenderGraph>, layouter: Layouter, graphs: Array<string> = Bench.GRAPHS_ALL, renderer: Renderer = null, basePath: string = "/graphs/") {
         const promises = graphs.map(name => {
             return () => loadFunction(name, basePath).then(async (renderGraph: RenderGraph) => {
                 if (renderer !== null) {
