@@ -1,0 +1,48 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Magnetic Spring Layouter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            border: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+    <script src="./dist/renderLib.js"></script>
+    <script>
+        window.addEventListener("load", function () {
+            const renderer = new renderLib.renderer.PixiRenderer(document.body);
+            const graph = (new URLSearchParams(window.location.search)).get('graph');
+
+            const render = (iterations) => {
+                const layouter = new renderLib.layouter.MagneticSpringLayouter({numIterations: iterations, printTimes: false});
+                renderer.show(layouter, graph);
+            };
+            let step = (new URLSearchParams(window.location.search)).get('step') || 1000;
+            render(step);
+            document.addEventListener("keyup", function(e) {
+                if (e.which === 37) {
+                    step = Math.max(step - 1, 0);
+                    render(step);
+                }
+                if (e.which === 39) {
+                    step++;
+                    render(step);
+                }
+            }, false);
+        });
+    </script>
+</head>
+<body>
+</body>
+</html>

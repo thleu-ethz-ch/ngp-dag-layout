@@ -1,0 +1,137 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Quality Benchmark</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            border: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+        html {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+        }
+        body {
+            display: flex;
+        }
+        table {
+            border-collapse: collapse;
+            margin: auto;
+        }
+        td {
+            padding: 5px;
+            border: 1px solid #ccc;
+            text-align: right;
+        }
+        tr:first-child td {
+            text-align: center;
+        }
+        td:first-child {
+            text-align: left;
+        }
+        tr:last-child td {
+            background-color: #eee;
+        }
+        .best {
+            font-weight: bold;
+        }
+    </style>
+    <script src="./dist/layoutLib.js"></script>
+    <script src="./dist/renderLib.js"></script>
+    <script>
+        window.addEventListener("load", function () {
+            const graphs = layoutLib.Bench.GRAPHS_POLY;
+            const layouters = [
+                //["DAG", layoutLib.layouter.DagreLayouter, {}],
+                ["SUG", layoutLib.layouter.SugiyamaLayouter, {preorderPorts: false}],
+                ["SUG-P", layoutLib.layouter.SugiyamaLayouter, {preorderPorts: true}],
+                ["SUG-H", layoutLib.layouter.SugiyamaLayouter, {preorderPorts: true, compactRanks: false}],
+                //["MAG", layoutLib.layouter.MagneticSpringLayouter, {}],
+            ];
+
+            const table = document.getElementById("table");
+            for (let l = 0; l < layouters.length; ++l) {
+                const tableRows = document.getElementsByTagName('tr');
+                tableRows[0].innerHTML += "<td><b>" + layouters[l][0] + "</b></td>";
+            }
+            for (let g = 0; g < graphs.length; ++g) {
+                let name = graphs[g];
+                let parts = name.split("/");
+                let html = '<tr><td><b>' + parts[parts.length - 1] + '</b></td>';
+                for (let l = 0; l < layouters.length; ++l) {
+                    html += '<td></td>';
+                }
+                html += '</tr>';
+                table.innerHTML += html;
+                const tableRows = document.getElementsByTagName('tr');
+                layoutLib.Loader.loadXhr(name).then((renderGraph) => {
+                    tableRows[g + 1].childNodes[0].innerHTML += '<br>n=' + renderGraph.numNodes() + '<br>m=' + renderGraph.numEdges() + '<br>c=' + renderGraph.numConnectors();
+                });
+            }
+            let html = '<tr><td><b>sum</b></td>';
+            for (let l = 0; l < layouters.length; ++l) {
+                html += '<td></td>';
+            }
+            html += '</tr>';
+            table.innerHTML += html;
+            const tableRows = document.getElementsByTagName('tr');
+
+            let bestScorePerGraph = [], bestLayoutersPerGraph = [];
+            let bestSum = Number.POSITIVE_INFINITY, bestSumLayouters = new Set();
+            for (let g = 0; g < graphs.length; ++g) {
+                bestScorePerGraph[g] = Number.POSITIVE_INFINITY;
+            }
+            const results = {};
+            const promises = layouters.map((layouter, l) => {
+                return () => layoutLib.Bench.run(layoutLib.Bench.FN_COST, layoutLib.Loader.loadXhr, new layouter[1](layouter[2]), graphs, new renderLib.renderer.PixiRenderer(document.createElement('div'))).then(result => {
+                    results[layouter[0]] = {};
+                    let sum = 0;
+                    for (let g = 0; g < graphs.length; ++g) {
+                        let name = graphs[g];
+                        let parts = name.split("/");
+                        results[layouter[0]][parts[parts.length - 1]] = result[g];
+                        tableRows[g + 1].childNodes[l + 1].innerHTML = result[g].toFixed(2);
+                        if (result[g] < bestScorePerGraph[g]) {
+                            bestScorePerGraph[g] = result[g];
+                            bestLayoutersPerGraph[g] = new Set([l]);
+                        } else if (result[g] === bestScorePerGraph[g]) {
+                            bestLayoutersPerGraph[g].add(l);
+                        }
+                        sum += result[g];
+                    }
+                    tableRows[graphs.length + 1].childNodes[l + 1].innerHTML = sum.toFixed(2);
+                    if (sum < bestSum) {
+                        bestSum = sum;
+                        bestSumLayouters = new Set([l]);
+                    } else if (sum === bestSum) {
+                        bestSumLayouters.add(l);
+                    }
+                    if (l === layouters.length - 1) {
+                        for (let g = 0; g < graphs.length; ++g) {
+                            bestLayoutersPerGraph[g].forEach(l => {
+                                tableRows[g + 1].childNodes[l + 1].classList.add("best");
+                            });
+                        }
+                        bestSumLayouters.forEach(l => {
+                            tableRows[tableRows.length - 1].childNodes[l + 1].classList.add("best");
+                        });
+                    }
+                });
+            }, layouters.length);
+            layoutLib.util.Serializer.serializePromises(promises);
+        });
+    </script>
+</head>
+<body>
+<table>
+    <tbody id="table"><tr><td></td></tr></tbody>
+</table>
+</body>
+</html>

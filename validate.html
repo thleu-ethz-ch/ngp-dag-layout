@@ -1,0 +1,103 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Validation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            border: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+        html {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+        }
+        body {
+            display: flex;
+        }
+        table {
+            border-collapse: collapse;
+            margin: auto;
+        }
+        td {
+            padding: 5px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+        td:first-child {
+            text-align: left;
+        }
+        .valid {
+            background: rgba(0, 255, 0, 0.5);
+        }
+        .invalid {
+            background: rgba(255, 0, 0, 0.5);
+        }
+    </style>
+    <script src="./dist/layoutLib.js"></script>
+    <script src="./dist/renderLib.js"></script>
+    <script>
+        window.addEventListener("load", function () {
+            const graphs = layoutLib.Bench.GRAPHS_ALL;
+            const layouters = [
+                //["DAG", layoutLib.layouter.DagreLayouter, {}],
+                ["SUG", layoutLib.layouter.SugiyamaLayouter, {preorderPorts: false}],
+                ["SUG-A", layoutLib.layouter.SugiyamaLayouter, {preorderPorts: false, optimizeAngles: true}],
+                ["SUG-P", layoutLib.layouter.SugiyamaLayouter, {preorderPorts: true}],
+                ["SUG-H", layoutLib.layouter.SugiyamaLayouter, {preorderPorts: true, compactRanks: false}],
+                ["SUG-PA", layoutLib.layouter.SugiyamaLayouter, {preorderPorts: true, optimizeAngles: true}],
+                ["SUG-S", layoutLib.layouter.SugiyamaLayouter, {preorderPorts: false, numShuffles: 10}],
+                ["SUG-SA", layoutLib.layouter.SugiyamaLayouter, {preorderPorts: false, numShuffles: 10, optimizeAngles: true}],
+                ["SUG-PS", layoutLib.layouter.SugiyamaLayouter, {preorderPorts: true, numShuffles: 10}],
+                ["SUG-PSA", layoutLib.layouter.SugiyamaLayouter, {preorderPorts: true, numShuffles: 10, optimizeAngles: true}],
+                ["SUG-PB", layoutLib.layouter.SugiyamaLayouter, {preorderPorts: true, bundle: true}],
+                ["SUG-PM4", layoutLib.layouter.SugiyamaLayouter, {preorderPorts: true, bundle: true, webWorkers: true}],
+                ["SUG-PS7M7", layoutLib.layouter.SugiyamaLayouter, {preorderPorts: true, bundle: true, webWorkers: true, numShuffles: 7}],
+                ["SUG-PW", layoutLib.layouter.SugiyamaLayouter, {preorderPorts: true, bundle: true, webAssembly: true}],
+                //["MAG", layoutLib.layouter.MagneticSpringLayouter, {}],
+            ];
+
+            const table = document.getElementById("table");
+            for (let l = 0; l < layouters.length; ++l) {
+                const tableRows = document.getElementsByTagName('tr');
+                tableRows[0].innerHTML += "<td><b>" + layouters[l][0] + "</b></td>";
+            }
+            for (let g = 0; g < graphs.length; ++g) {
+                let name = graphs[g];
+                let parts = name.split("/");
+                let html = '<tr><td><b>' + parts[parts.length - 1] + '</b></td>';
+                for (let l = 0; l < layouters.length; ++l) {
+                    html += '<td></td>';
+                }
+                html += '</tr>';
+                table.innerHTML += html;
+            }
+            const tableRows = document.getElementsByTagName('tr');
+            const promises = layouters.map((layouter, l) => {
+                return () => layoutLib.Bench.run(layoutLib.Bench.FN_VALIDATE, layoutLib.Loader.loadXhr, new layouter[1](layouter[2]), graphs, new renderLib.renderer.PixiRenderer(document.createElement('div'))).then(result => {
+                    for (let g = 0; g < graphs.length; ++g) {
+                        tableRows[g + 1].childNodes[l + 1].innerHTML = result[g];
+                        if (result[g]) {
+                            tableRows[g + 1].childNodes[l + 1].classList.add('valid');
+                        } else {
+                            tableRows[g + 1].childNodes[l + 1].classList.add('invalid');
+                        }
+                    }
+                });
+            });
+            layoutLib.util.Serializer.serializePromises(promises);
+        });
+    </script>
+</head>
+<body>
+<table>
+    <tbody id="table"><tr><td></td></tr></tbody>
+</table>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Performance Benchmark</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            border: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+        html {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 12px;
+        }
+        body {
+            display: flex;
+        }
+        table {
+            border-collapse: collapse;
+            margin: auto;
+        }
+        td {
+            padding: 5px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+        td:first-child {
+            text-align: left;
+        }
+    </style>
+    <script src="./dist/layoutLib.js"></script>
+    <script src="./dist/renderLib.js"></script>
+    <script>
+        window.addEventListener("load", function () {
+            const graphs = layoutLib.Bench.GRAPHS_POLY;
+            const layouters = [
+                //["DAG", layoutLib.layouter.DagreLayouter, {}],
+                ["SUG", layoutLib.layouter.SugiyamaLayouter, {preorderPorts: false}],
+                ["SUG-P", layoutLib.layouter.SugiyamaLayouter, {preorderPorts: true}],
+                ["SUG-H", layoutLib.layouter.SugiyamaLayouter, {preorderPorts: true, compactRanks: false}],
+                //["MAG", layoutLib.layouter.MagneticSpringLayouter, {}],
+            ];
+
+            const table = document.getElementById("table");
+            for (let l = 0; l < layouters.length; ++l) {
+                const tableRows = document.getElementsByTagName('tr');
+                tableRows[0].innerHTML += "<td><b>" + layouters[l][0] + "</b></td>";
+            }
+            for (let g = 0; g < graphs.length; ++g) {
+                let name = graphs[g];
+                let parts = name.split("/");
+                let html = '<tr><td><b>' + parts[parts.length - 1] + '</b></td>';
+                for (let l = 0; l < layouters.length; ++l) {
+                    html += '<td></td>';
+                }
+                html += '</tr>';
+                table.innerHTML += html;
+            }
+            const tableRows = document.getElementsByTagName('tr');
+
+            const results = {};
+            const promises = layouters.map((layouterInfo, l) => {
+                return () => {
+                    const layouter = new layouterInfo[1](layouterInfo[2]);
+                    return layoutLib.Bench.runtime(layoutLib.Loader.loadXhr, layouter, graphs, new renderLib.renderer.PixiRenderer(document.createElement('div')), 1).then((result) => {
+                        layouter.cleanUp();
+                        results[layouterInfo[0]] = {};
+                        for (let g = 0; g < graphs.length; ++g) {
+                            let name = graphs[g];
+                            let parts = name.split("/");
+                            results[layouterInfo[0]][parts[parts.length - 1]] = result[g];
+                            tableRows[g + 1].childNodes[l + 1].innerHTML = result[g].toString();
+                        }
+                    });
+                };
+            });
+            layoutLib.util.Serializer.serializePromises(promises);
+        });
+    </script>
+</head>
+<body>
+<table>
+    <tbody id="table"><tr><td></td></tr></tbody>
+</table>
+</body>
+</html>

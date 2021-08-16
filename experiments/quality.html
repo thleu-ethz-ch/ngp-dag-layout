@@ -1,0 +1,75 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Quality</title>
+    <script src="../dist/layoutLib.js"></script>
+    <script src="../dist/renderLib.js"></script>
+    <script>
+        window.addEventListener("load", function () {
+            const params = new URLSearchParams(window.location.search);
+            const graph = params.get('graph');
+            let layouterClass;
+            switch (params.get('layouter')) {
+                case 'dagre':
+                    layouterClass = layoutLib.layouter.DagreLayouter;
+                    break;
+                case 'magnetic':
+                    layouterClass = layoutLib.layouter.MagneticSpringLayouter;
+                    break;
+                default:
+                    layouterClass = layoutLib.layouter.SugiyamaLayouter;
+                    break;
+            }
+            let measure = params.get('measure');
+            let measureFunction;
+            switch (measure) {
+                case 'area':
+                    measureFunction = layoutLib.Bench.FN_AREA;
+                    break;
+                case 'crossings':
+                    measureFunction = layoutLib.Bench.FN_CROSSINGS;
+                    break;
+                case 'ranks':
+                    measureFunction = layoutLib.Bench.FN_RANKS;
+                    break;
+                case 'validate':
+                    measureFunction = layoutLib.Bench.FN_VALIDATE;
+                    break;
+                default:
+                    measureFunction = layoutLib.Bench.FN_COST;
+                    measure = 'cost';
+                    break;
+            }
+            const renderer = new renderLib.renderer.PixiRenderer(document.body);
+            const options = {};
+            options["preorderPorts"] = (parseInt(params.get('preorderPorts') || "1") === 1);
+            options["numShuffles"] = parseInt(params.get('numShuffles') || "0");
+            options["webWorkers"] = (parseInt(params.get('webWorkers') || "0") === 1);
+            options["maxWorkers"] = parseInt(params.get('maxWorkers') || "0");
+            options["optimizeAngles"] = (parseInt(params.get('optimizeAngles') || "0") === 1);
+            options["bundle"] = (parseInt(params.get('bundle') || "0") === 1);
+            if (options["maxWorkers"] === 0) {
+                options["maxWorkers"] = (typeof(navigator) !== "undefined" ? (navigator.hardwareConcurrency - 1) : 0);
+            }
+            const layouter = new layouterClass(options);
+            return layoutLib.Bench.run(measureFunction, layoutLib.Loader.loadXhr, layouter, [graph], renderer).then((result) => {
+                console.log(result);
+                let entries = JSON.parse(this.window.localStorage.getItem('data'));
+                if (entries === null) {
+                    entries = [];
+                }
+                const entry = {name: params.get('name') || '???', graph: graph}
+                entry[measure] = result[0];
+
+                entries.push(entry);
+                this.window.localStorage.setItem('data', JSON.stringify(entries));
+                window.close();
+            }).catch(e => {
+                window.close();
+            });
+        });
+    </script>
+</head>
+<body></body>
+</html>

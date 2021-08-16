@@ -1,0 +1,46 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Layout Other Graphs</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            border: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+    <script src="./dist/renderLib.js"></script>
+    <script>
+        window.addEventListener("load", function () {
+            const graph = new renderLib.renderGraph.RenderGraph();
+            const a = new renderLib.renderGraph.GenericNode("a");
+            const b = new renderLib.renderGraph.GenericNode("b");
+            const container = new renderLib.renderGraph.GenericContainerNode("");
+            const containerGraph = new renderLib.renderGraph.RenderGraph();
+            const c = new renderLib.renderGraph.GenericNode("c");
+            const d = new renderLib.renderGraph.GenericNode("d");
+            graph.addNode(a);
+            graph.addNode(b);
+            graph.addNode(container);
+            container.setChildGraph(containerGraph);
+            containerGraph.addNode(c);
+            containerGraph.addNode(d);
+            graph.addEdge(new renderLib.renderGraph.GenericEdge(a.id, container.id));
+            graph.addEdge(new renderLib.renderGraph.GenericEdge(b.id, container.id));
+            const renderer = new renderLib.renderer.SvgRenderer(document.body);
+            renderer.layoutAndRender(graph);
+        });
+    </script>
+</head>
+<body>
+</body>
+</html>

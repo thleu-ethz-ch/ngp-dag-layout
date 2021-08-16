@@ -1,0 +1,1 @@
+Place SDFG files (with .json extension) in this directory.

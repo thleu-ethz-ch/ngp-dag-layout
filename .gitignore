@@ -1,0 +1,5 @@
+!dist
+.idea
+.vscode
+package.json.lock
+node_modules

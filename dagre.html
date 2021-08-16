@@ -1,0 +1,32 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dagre Layouter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            border: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+    <script src="./dist/renderLib.js"></script>
+    <script>
+        window.addEventListener("load", function () {
+            const layouter = new renderLib.layouter.DagreLayouter({ranker: renderLib.layouter.DagreLayouter.RANKER_NETWORK_SIMPLEX, printTimes: false});
+            const renderer = new renderLib.renderer.PixiRenderer(document.body);
+            const graph = (new URLSearchParams(window.location.search)).get('graph');
+            renderer.show(layouter, graph);
+        });
+    </script>
+</head>
+<body></body>
+</html>
