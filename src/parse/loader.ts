@@ -14,6 +14,9 @@ export default class Loader {
     }
 
     static loadXhr(name: string, basePath: string = "./graphs/"): Promise<RenderGraph> {
+        if (basePath === null) {
+            basePath = Loader.getBasePath();
+        }
         const doXhr = (path) => {
             return new Promise(function (resolve, reject) {
                 const xhr = new XMLHttpRequest();
@@ -48,7 +51,4 @@ export default class Loader {
         }
         return graphDir;
     }
-
-
-
 }
