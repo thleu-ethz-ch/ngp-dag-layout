@@ -514,11 +514,7 @@ export default class OrderGraph {
                 Timer.stop(["doLayout", "orderRanks", "doOrder", "order", "doOrder", "reorder"]);
             };
 
-            const getConflict = (type: "HEAVYHEAVY" | "HEAVYLIGHT", r: number, skipIfZero: boolean = false): [number, number ,number, number, number] => {
-                if (skipIfZero && crossings[r] === 0) {
-                    // there is no conflict in this rank
-                    return null;
-                }
+            const getConflict = (type: "HEAVYHEAVY" | "HEAVYLIGHT", r: number): [number, number ,number, number, number] => {
                 let heavyLeftNorth = -1;
                 let heavyLeftSouth = -1;
                 let pos = 0;
@@ -558,7 +554,33 @@ export default class OrderGraph {
             }
 
             /**
-             * Tries to resolve illegal crossings, i. e. crossings of edges with infinite weight.
+             * Resolves all heavy-heavy conflicts between rank r-1 and r.
+             */
+            const heavy = [];
+            const resolveHeavyHeavy = (r: number) => {
+                Timer.start(["doLayout", "orderRanks", "doOrder", "order", "doOrder", "resolve", "resolveHeavyHeavy"]);
+                heavy.length = 0;
+                for (let tmpPos = 0; tmpPos < order[r].length; ++tmpPos) {
+                    const tmpNodeId = order[r][tmpPos];
+                    if (_.some(neighbors[0][tmpNodeId], neighbor => neighbor.weight === Number.POSITIVE_INFINITY)) {
+                        heavy.push(tmpNodeId);
+                    }
+                }
+                inPlaceSort(heavy).asc(southNodeId => positions[neighbors[0][southNodeId][0].end]);
+
+                let pointer = 0;
+                for (let tmpPos = 0; tmpPos < order[r].length; ++tmpPos) {
+                    const tmpNodeId = order[r][tmpPos];
+                    if (_.some(neighbors[0][tmpNodeId], neighbor => neighbor.weight === Number.POSITIVE_INFINITY)) {
+                        order[r][tmpPos] = heavy[pointer++];
+                        positions[order[r][tmpPos]] = tmpPos;
+                    }
+                }
+                Timer.stop(["doLayout", "orderRanks", "doOrder", "order", "doOrder", "resolve", "resolveHeavyHeavy"]);
+            }
+
+            /**
+             * Resolves all conflicts.
              */
             const resolveConflicts = () => {
                 if (DEBUG) {
@@ -572,7 +594,6 @@ export default class OrderGraph {
                         intranode[node.id] = node.isIntranode;
                         intranodePathEnd[node.id] = node.isIntranode && (neighbors[1][node.id].length === 0 || neighbors[1][node.id][0].weight < Number.POSITIVE_INFINITY);
                         sink[node.id] = (graph._nodeGraph.numOutEdges(node.id) === 0);
-                        moved[node.id] = 0;
                         moving[node.id] = true;
                     });
                     rankWidths[r] = order[r].length;
@@ -625,7 +646,6 @@ export default class OrderGraph {
                     intranodePathEnd[newNode.id] = false;
                     moving[newNode.id] = true;
                     sink[newNode.id] = false;
-                    moved[newNode.id] = moveBy;
                     return newNode;
                 };
 
@@ -654,8 +674,8 @@ export default class OrderGraph {
                     rankWidths[newR] = 0;
                 }
 
-                const resolveConflict = (isHeavyHeavy: boolean, conflict: [number, number, number, number, number]) => {
-                    Timer.start(["doLayout", "orderRanks", "doOrder", "order", "doOrder", "resolve", "resolveConflict"]);
+                const resolveHeavyLight = (conflict: [number, number, number, number, number]) => {
+                    Timer.start(["doLayout", "orderRanks", "doOrder", "order", "doOrder", "resolve", "resolveHeavyLight"]);
 
                     const [r, crossedNorthPos, crossedSouthPos, crossingNorthPos, crossingSouthPos] = conflict;
 
@@ -669,34 +689,8 @@ export default class OrderGraph {
                     let crossingSouthNode = graph.node(crossingSouthNodeId);
                     let crossingEdge;
 
-                    const resolveHeavyHeavy = () => {
-                        Timer.start(["doLayout", "orderRanks", "doOrder", "order", "doOrder", "resolve", "resolveConflict", "resolveHeavyHeavy"]);
-
-                        const tmpOrderA = changeNodePosInOrder(order[r], crossingSouthPos, crossedSouthPos);
-                        const tmpOrderB = changeNodePosInOrder(order[r], crossedSouthPos, crossingSouthPos);
-
-                        let crossingsANorth = countCrossings(tmpOrderA, r, 0);
-                        let crossingsBNorth = countCrossings(tmpOrderB, r, 0);
-                        let crossingsASouth = 0;
-                        let crossingsBSouth = 0;
-                        if (r < ranks.length - 1) {
-                            crossingsASouth = countCrossings(tmpOrderA, r, 1);
-                            crossingsBSouth = countCrossings(tmpOrderB, r, 1);
-                        }
-                        if ((crossingsANorth + crossingsASouth) < (crossingsBNorth + crossingsBSouth)) {
-                            order[r] = tmpOrderA;
-                        } else {
-                            order[r] = tmpOrderB;
-                        }
-                        // update positions
-                        _.forEach(order[r], (nodeId: number, pos: number) => {
-                            positions[nodeId] = pos;
-                        });
-                        Timer.stop(["doLayout", "orderRanks", "doOrder", "order", "doOrder", "resolve", "resolveConflict", "resolveHeavyHeavy"]);
-                    };
-
                     const resolveY = () => {
-                        Timer.start(["doLayout", "orderRanks", "doOrder", "order", "doOrder", "resolve", "resolveConflict", "resolveY"]);
+                        Timer.start(["doLayout", "orderRanks", "doOrder", "order", "doOrder", "resolve", "resolveHeavyLight", "resolveY"]);
 
                         // mark nodes that must not be moved
                         _.forEach(order[r - 1], (nodeId: number) => {
@@ -797,11 +791,11 @@ export default class OrderGraph {
                             Assert.assertAll(_.range(1, r + 1), r => getConflict("HEAVYLIGHT", r) === null, "heavy-light conflict after y resolution with r = " + r);
                         }
 
-                        Timer.stop(["doLayout", "orderRanks", "doOrder", "order", "doOrder", "resolve", "resolveConflict", "resolveY"]);
+                        Timer.stop(["doLayout", "orderRanks", "doOrder", "order", "doOrder", "resolve", "resolveHeavyLight", "resolveY"]);
                     }
 
                     const checkXResolution = (side: "LEFT" | "RIGHT") => {
-                        Timer.start(["doLayout", "orderRanks", "doOrder", "order", "doOrder", "resolve", "resolveConflict", "checkX"]);
+                        Timer.start(["doLayout", "orderRanks", "doOrder", "order", "doOrder", "resolve", "resolveHeavyLight", "checkX"]);
                         const nodesPerRank = new Array(ranks.length);
                         const minHeavyNodePerRank: Array<number> = new Array(ranks.length);
                         const maxOtherNodePerRank: Array<number> = new Array(ranks.length);
@@ -911,7 +905,7 @@ export default class OrderGraph {
                             }
                         }
                         if (conflict) {
-                            Timer.stop(["doLayout", "orderRanks", "doOrder", "order", "doOrder", "resolve", "resolveConflict", "checkX"]);
+                            Timer.stop(["doLayout", "orderRanks", "doOrder", "order", "doOrder", "resolve", "resolveHeavyLight", "checkX"]);
                             return null;
                         }
                         // group nodes
@@ -936,12 +930,12 @@ export default class OrderGraph {
                                 }
                             });
                         });
-                        Timer.stop(["doLayout", "orderRanks", "doOrder", "order", "doOrder", "resolve", "resolveConflict", "checkX"]);
+                        Timer.stop(["doLayout", "orderRanks", "doOrder", "order", "doOrder", "resolve", "resolveHeavyLight", "checkX"]);
                         return nodesPerRankGrouped;
                     };
 
                     const resolveX = (side: "LEFT" | "RIGHT", nodesPerRank) => {
-                        Timer.start(["doLayout", "orderRanks", "doOrder", "order", "doOrder", "resolve", "resolveConflict", "resolveX"]);
+                        Timer.start(["doLayout", "orderRanks", "doOrder", "order", "doOrder", "resolve", "resolveHeavyLight", "resolveX"]);
 
                         _.forEach(nodesPerRank, (rank, r: number) => {
                             if (rank["MOVING"].size === 0 || rank["GREEN"].size === 0) {
@@ -974,71 +968,60 @@ export default class OrderGraph {
                         });
 
                         if (DEBUG) {
-                            Assert.assertAll(_.range(r + 1), r => getConflict("HEAVYHEAVY", r, true) === null, "heavy-heavy conflict after x resolution");
+                            Assert.assertAll(_.range(r + 1), r => getConflict("HEAVYHEAVY", r) === null, "heavy-heavy conflict after x resolution");
                         }
-                        Timer.stop(["doLayout", "orderRanks", "doOrder", "order", "doOrder", "resolve", "resolveConflict", "resolveX"]);
+                        Timer.stop(["doLayout", "orderRanks", "doOrder", "order", "doOrder", "resolve", "resolveHeavyLight", "resolveX"]);
                     };
 
                     didResolveY = false;
-                    if (isHeavyHeavy) {
-                        resolveHeavyHeavy();
-                    } else {
-                        if (options["resolveX"]) {
-                            crossingEdge = graph.edgeBetween(crossingNorthNode.id, crossingSouthNode.id);
-                            const leftResolution = checkXResolution("LEFT");
-                            const rightResolution = checkXResolution("RIGHT");
-                            if (leftResolution === null) {
-                                if (rightResolution === null) {
-                                    resolveY();
-                                    didResolveY = true;
+                    if (options["resolveX"]) {
+                        crossingEdge = graph.edgeBetween(crossingNorthNode.id, crossingSouthNode.id);
+                        const leftResolution = checkXResolution("LEFT");
+                        const rightResolution = checkXResolution("RIGHT");
+                        if (leftResolution === null) {
+                            if (rightResolution === null) {
+                                resolveY();
+                                didResolveY = true;
+                            } else {
+                                resolveX("RIGHT", rightResolution);
+                            }
+                        } else {
+                            if (rightResolution === null) {
+                                resolveX("LEFT", leftResolution);
+                            } else {
+                                const numNodesLeft = _.sum(_.map(leftResolution, rank => rank["MOVING"].size));
+                                const numNodesRight = _.sum(_.map(rightResolution, rank => rank["MOVING"].size));
+                                if (numNodesLeft < numNodesRight) {
+                                    resolveX("LEFT", leftResolution);
                                 } else {
                                     resolveX("RIGHT", rightResolution);
                                 }
-                            } else {
-                                if (rightResolution === null) {
-                                    resolveX("LEFT", leftResolution);
-                                } else {
-                                    const numNodesLeft = _.sum(_.map(leftResolution, rank => rank["MOVING"].size));
-                                    const numNodesRight = _.sum(_.map(rightResolution, rank => rank["MOVING"].size));
-                                    if (numNodesLeft < numNodesRight) {
-                                        resolveX("LEFT", leftResolution);
-                                    } else {
-                                        resolveX("RIGHT", rightResolution);
-                                    }
-                                }
                             }
-                        } else {
-                            resolveY();
-                            didResolveY = true;
                         }
+                    } else {
+                        resolveY();
+                        didResolveY = true;
                     }
-                    Timer.stop(["doLayout", "orderRanks", "doOrder", "order", "doOrder", "resolve", "resolveConflict"]);
+                    Timer.stop(["doLayout", "orderRanks", "doOrder", "order", "doOrder", "resolve", "resolveHeavyLight"]);
                 }
 
-                let moveBy = 0;
                 let didResolveY = false;
 
                 for (let r = 1; r < ranks.length; ++r) {
-                    crossings[r] = countCrossings(order[r], r);
-                }
-                for (let r = 1; r < ranks.length; ++r) {
-                    while (true) {
-                        const conflict = getConflict("HEAVYHEAVY", r);
-                        if (conflict === null) {
-                            break;
-                        }
-                        resolveConflict(true, conflict);
-                    }
+                    resolveHeavyHeavy(r);
                     while (true) {
                         const conflict = getConflict("HEAVYLIGHT", r);
                         if (conflict === null) {
                             break;
                         }
-                        resolveConflict(false, conflict);
+                        resolveHeavyLight(conflict);
                         if (didResolveY) {
                             break;
                         }
                     }
+                }
+                for (let r = 1; r < ranks.length; ++r) {
+                    resolveHeavyHeavy(r);
                 }
                 if (DEBUG) {
                     Assert.assertAll(_.range(1, ranks.length), r => getConflict("HEAVYLIGHT", r) === null, "heavy-light conflict after resolution");
