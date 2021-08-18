@@ -13,7 +13,7 @@ with open('../results/shuffling.json') as file:
     df = pd.json_normalize(json.load(file))
     df["group"] = df["graph"].map(lambda name: "POLY" if name in POLY else ("PORT" if name in PORT else ("TALL" if name in TALL else "WIDE")))
     df = df.groupby(["name", "group"], as_index=False).sum(numeric_only=True)
-    df["layouter"] = df["name"].map(lambda name: "SUG-PS" if "SUG-PS" in name else "SUG-S")
+    df["layouter"] = df["name"].map(lambda name: "SUG-JS" if "SUG-JS" in name else "SUG-S")
     df["shuffles"] = df["name"].map(lambda name: int(re.findall('.*S([0-9]+).*', name)[0]))
 
     df = df[df["shuffles"] <= 50]
@@ -24,8 +24,8 @@ with open('../results/shuffling.json') as file:
     df["group"] = pd.Categorical(df["group"], ["PORT", "WIDE", "TALL", "POLY"])
 
     # use one layouter at a time because we don't know how to reset plt properly
-    # "SUG-S", "SUG-PS"
-    for layouter in ["SUG-PS"]:
+    # "SUG-S", "SUG-JS"
+    for layouter in ["SUG-JS"]:
         df = df[df.layouter == layouter]
         fig, ax = plt.subplots()
         plt.grid(color='#E0E0E0')

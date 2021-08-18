@@ -4,9 +4,9 @@ import experiments.bench.quality.cost as cost
 layouters = [
     {'name': 'DAG', 'layouter': 'dagre', 'preorderPorts': 0, 'numShuffles': 0},
     {'name': 'SUG', 'layouter': 'sugiyama', 'preorderPorts': 0, 'numShuffles': 0},
-    {'name': 'SUG-P', 'layouter': 'sugiyama', 'preorderPorts': 1, 'numShuffles': 0},
+    {'name': 'SUG-J', 'layouter': 'sugiyama', 'preorderPorts': 1, 'numShuffles': 0},
     {'name': 'SUG-S', 'layouter': 'sugiyama', 'preorderPorts': 0, 'numShuffles': 10},
-    {'name': 'SUG-PS', 'layouter': 'sugiyama', 'preorderPorts': 1, 'numShuffles': 10},
+    {'name': 'SUG-JS', 'layouter': 'sugiyama', 'preorderPorts': 1, 'numShuffles': 10},
 ]
 
 experiments = [

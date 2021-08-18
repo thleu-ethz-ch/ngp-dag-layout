@@ -16,7 +16,7 @@ with open('../results/overview.json') as file:
         original_df_cost = pd.json_normalize(json.load(file_cost))
         # use one group at a time because we don't know how to reset plt properly
         # POLY_DAGRE, WIDE, TALL, PORT
-        for group in ["WIDE"]:
+        for group in ["POLY_DAGRE"]:
             df = original_df.copy()
             df_cost = original_df_cost.copy()
             if group == "POLY_DAGRE":
@@ -43,7 +43,7 @@ with open('../results/overview.json') as file:
 
             median_dict = dict(sum_df.groupby(["name"], as_index=False).median()[["name", "time"]].values)
             sum_df["mediandiff"] = sum_df.apply(lambda row: abs(row["time"] - median_dict[row["name"]]), axis=1)
-            sum_df["name"] = pd.Categorical(sum_df["name"], ["DAG", "SUG", "SUG-P", "SUG-S", "SUG-PS"])
+            sum_df["name"] = pd.Categorical(sum_df["name"], ["DAG", "SUG", "SUG-J", "SUG-S", "SUG-JS"])
             sum_df = sum_df.sort_values(["name", "mediandiff"], ascending=[True, False])
 
             fig, ax = plt.subplots()

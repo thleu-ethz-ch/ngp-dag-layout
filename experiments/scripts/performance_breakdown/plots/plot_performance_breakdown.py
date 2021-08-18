@@ -14,7 +14,7 @@ with open('../results/performance_breakdown.json') as file:
     original_df = pd.json_normalize(json.load(file))
     # use one group at a time because we don't know how to reset plt properly
     # POLY, WIDE, TALL, PORT, DSW1
-    for group in ["POLY"]:
+    for group in ["DSW1"]:
         df = original_df.copy()
         if group == "POLY":
             graphs = POLY
