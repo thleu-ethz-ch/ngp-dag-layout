@@ -7,6 +7,7 @@ from experiments.bench.graphs import *
 import experiments.bench.eval.pareto
 
 matplotlib.rc('text', usetex=True)
+matplotlib.rcParams.update({'font.size': 12})
 pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
 
@@ -46,10 +47,13 @@ with open('../results/overview.json') as file:
             sum_df["name"] = pd.Categorical(sum_df["name"], ["DAG", "SUG", "SUG-J", "SUG-S", "SUG-JS"])
             sum_df = sum_df.sort_values(["name", "mediandiff"], ascending=[True, False])
 
+            print(median_dict)
+            print(cost_dict)
+
             fig, ax = plt.subplots()
 
             plt.grid(color='#E0E0E0')
-            sns.set_theme(style="whitegrid")
+            sns.set_theme(style="whitegrid", font_scale=1.2)
 
             pareto_lines = experiments.bench.eval.pareto.lines(cost_dict, median_dict)
             for line in pareto_lines:
@@ -63,10 +67,9 @@ with open('../results/overview.json') as file:
             g.set(xlabel="Cost", ylabel="Time [s]")
             handles, labels = ax.get_legend_handles_labels()
             if group == "POLY_DAGRE":
-                ax.legend(handles=handles[0:], labels=labels[0:])
+                ax.legend(handles=handles[0:], labels=labels[0:], loc='lower right')
             else:
                 ax.get_legend().remove()
-            ax.set_xlim(xmin=0)
             ax.set_ylim(ymin=0)
             ax.get_xaxis().set_major_formatter(matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
             ax.get_yaxis().set_major_formatter(matplotlib.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))

@@ -34,7 +34,7 @@ export default class SugiyamaLayouter extends Layouter {
     constructor(options: object = {}) {
         super(options);
         this._options = _.defaults(options, this._options, {
-            preorderPorts: true,
+            jointOrder: true,
             compactRanks: true,
             numShuffles: 0,
             optimizeAngles: false,
@@ -460,7 +460,7 @@ export default class SugiyamaLayouter extends Layouter {
          * In this step, scope insides and outsides are handled in the same order graph.
          * If there are nested scopes, they are flattened.
          */
-        if (this._options.preorderPorts) {
+        if (this._options.jointOrder) {
             Timer.start(["doLayout", "orderRanks", "doOrder", "preorder"]);
             // order
             const connectorOrderGraph = this._createConnectorGraph(graph, true, shuffle, shuffle);
@@ -515,14 +515,14 @@ export default class SugiyamaLayouter extends Layouter {
 
             // add nodes
             let levelNodes = _.clone(levelGraph.nodes());
-            if (shuffle && !this._options.preorderPorts) {
+            if (shuffle && !this._options.jointOrder) {
                 Shuffle.shuffle(levelNodes);
             }
             _.forEach(levelNodes, (levelNode: LevelNode) => {
                 const orderNode = new OrderNode(levelNode, levelNode.layoutNode.isVirtual || levelNode.layoutNode.isBundle, levelNode.layoutNode.rankSpan > 1, levelNode.layoutNode.label());
                 orderGroups[levelNode.rank].addNode(orderNode, levelNode.id);
                 nodeMap.set(levelNode.id, orderNode.id);
-                if (this._options.preorderPorts) {
+                if (this._options.jointOrder) {
                     orderNode.position = levelNode.position;
                 }
             });
@@ -550,7 +550,7 @@ export default class SugiyamaLayouter extends Layouter {
             await orderGraph.order({
                 debug: false,
                 resolveX: true,
-                countInitial: this._options.preorderPorts,
+                countInitial: this._options.jointOrder,
             });
 
             Timer.stop(["doLayout", "orderRanks", "doOrder", "orderNodes"]);
@@ -742,7 +742,7 @@ export default class SugiyamaLayouter extends Layouter {
 
         // order connectors
         Timer.start(["doLayout", "orderRanks", "doOrder", "orderConnectors"]);
-        const connectorOrderGraph = this._createConnectorGraph(graph, false, false, shuffle && !this._options.preorderPorts);
+        const connectorOrderGraph = this._createConnectorGraph(graph, false, false, shuffle && !this._options.jointOrder);
 
         await connectorOrderGraph.order({
             resolveConflicts: false,

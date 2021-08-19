@@ -797,13 +797,13 @@ export default class OrderGraph {
                     const checkXResolution = (side: "LEFT" | "RIGHT") => {
                         Timer.start(["doLayout", "orderRanks", "doOrder", "order", "doOrder", "resolve", "resolveHeavyLight", "checkX"]);
                         const nodesPerRank = new Array(ranks.length);
-                        const minHeavyNodePerRank: Array<number> = new Array(ranks.length);
-                        const maxOtherNodePerRank: Array<number> = new Array(ranks.length);
+                        const minGreenNodePerRank: Array<number> = new Array(ranks.length);
+                        const maxRedNodePerRank: Array<number> = new Array(ranks.length);
                         let conflict = false;
                         for (let r = 0; r < ranks.length; ++r) {
                             nodesPerRank[r] = new Map();
-                            minHeavyNodePerRank[r] = (side === "RIGHT" ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY);
-                            maxOtherNodePerRank[r] = (side === "RIGHT" ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY);
+                            minGreenNodePerRank[r] = (side === "RIGHT" ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY);
+                            maxRedNodePerRank[r] = (side === "RIGHT" ? Number.NEGATIVE_INFINITY : Number.POSITIVE_INFINITY);
                         }
                         const queue: Array<[OrderNode, string]> = [];
                         let minRank = r - 1;
@@ -816,9 +816,9 @@ export default class OrderGraph {
                             nodesPerRank[r].set(node, group);
                             queue.push([node, group]);
                             const addIntermediate = () => {
-                                if (geFun(maxOtherNodePerRank[r], minHeavyNodePerRank[r])) {
+                                if (geFun(maxRedNodePerRank[r], minGreenNodePerRank[r])) {
                                     const intermediate = [];
-                                    for (let pos = maxOtherNodePerRank[r]; pos !== minHeavyNodePerRank[r]; pos += moveDir) {
+                                    for (let pos = maxRedNodePerRank[r]; pos !== minGreenNodePerRank[r]; pos += moveDir) {
                                         const node = graph.node(order[r][pos]);
                                         if (!nodesPerRank[r].has(node)) {
                                             intermediate.push([node, "YELLOW"]);
@@ -832,16 +832,16 @@ export default class OrderGraph {
                                 }
                             }
                             if (group === "RED") {
-                                const prev = maxOtherNodePerRank[r];
-                                maxOtherNodePerRank[r] = maxFun(maxOtherNodePerRank[r], positions[node.id]);
-                                if (maxOtherNodePerRank[r] !== prev && minHeavyNodePerRank[r] !== Number.POSITIVE_INFINITY && minHeavyNodePerRank[r] !== Number.NEGATIVE_INFINITY) {
+                                const prev = maxRedNodePerRank[r];
+                                maxRedNodePerRank[r] = maxFun(maxRedNodePerRank[r], positions[node.id]);
+                                if (maxRedNodePerRank[r] !== prev && minGreenNodePerRank[r] !== Number.POSITIVE_INFINITY && minGreenNodePerRank[r] !== Number.NEGATIVE_INFINITY) {
                                     addIntermediate();
                                 }
                             } else {
                                 // potentially heavy
-                                const prev = minHeavyNodePerRank[r];
-                                minHeavyNodePerRank[r] = minFun(minHeavyNodePerRank[r], positions[node.id]);
-                                if (minHeavyNodePerRank[r] !== prev && maxOtherNodePerRank[r] !== Number.POSITIVE_INFINITY && maxOtherNodePerRank[r] !== Number.NEGATIVE_INFINITY) {
+                                const prev = minGreenNodePerRank[r];
+                                minGreenNodePerRank[r] = minFun(minGreenNodePerRank[r], positions[node.id]);
+                                if (minGreenNodePerRank[r] !== prev && maxRedNodePerRank[r] !== Number.POSITIVE_INFINITY && maxRedNodePerRank[r] !== Number.NEGATIVE_INFINITY) {
                                     addIntermediate();
                                 }
                             }
@@ -886,7 +886,7 @@ export default class OrderGraph {
                             if (node.rank > minRank) {
                                 addNeighbors("inEdges", "src", -1);
                             }
-                            if (node.rank === minRank && geFun(positions[node.id], minHeavyNodePerRank[node.rank])) {
+                            if (node.rank === minRank && geFun(positions[node.id], minGreenNodePerRank[node.rank])) {
                                 let foundNewMinRank = false;
                                 _.forEach(graph.inEdges(node.id), inEdge => {
                                     if (inEdge.weight === Number.POSITIVE_INFINITY) {
@@ -915,17 +915,15 @@ export default class OrderGraph {
                                 "GREEN": new Set(),
                                 "MOVING": new Set(),
                             };
-                            minHeavyNodePerRank[r] = (side === "RIGHT" ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY);
+                            minGreenNodePerRank[r] = (side === "RIGHT" ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY);
                             nodes.forEach((group, node) => {
-                                if (group !== "RED") {
-                                    // "GREEN" or "YELLOW"
-                                    // because we want to move as few nodes as possible, we count the "YELLOW" nodes to the "GREEN" nodes
+                                if (group === "GREEN") {
                                     nodesPerRankGrouped[r]["GREEN"].add(node);
-                                    minHeavyNodePerRank[r] = minFun(minHeavyNodePerRank[r], positions[node.id]);
+                                    minGreenNodePerRank[r] = minFun(minGreenNodePerRank[r], positions[node.id]);
                                 }
                             });
                             nodes.forEach((group, node) => {
-                                if (group === "RED" && geFun(positions[node.id], minHeavyNodePerRank[node.rank])) {
+                                if (group === "RED" && geFun(positions[node.id], minGreenNodePerRank[node.rank])) {
                                     nodesPerRankGrouped[r]["MOVING"].add(node);
                                 }
                             });
@@ -941,7 +939,8 @@ export default class OrderGraph {
                             if (rank["MOVING"].size === 0 || rank["GREEN"].size === 0) {
                                 return;
                             }
-                            const heavy: Array<OrderNode> = _.sortBy(Array.from(rank["GREEN"]), node => positions[node.id]);
+                            const green: Array<OrderNode> = _.sortBy(Array.from(rank["GREEN"]), node => positions[node.id]);
+                            // `moving` is the subset of red nodes that is on the wrong side of the green nodes
                             const moving: Array<OrderNode> = _.sortBy(Array.from(rank["MOVING"]), node => positions[node.id]);
                             const newOrder = [];
                             _.forEach(order[r], nodeId => {
@@ -949,13 +948,13 @@ export default class OrderGraph {
                                 if (rank["MOVING"].has(node)) {
                                     return; // do nothing
                                 }
-                                if (side === "RIGHT" && nodeId === heavy[0].id) {
+                                if (side === "RIGHT" && nodeId === green[0].id) {
                                     _.forEach(moving, movingNode => {
                                         newOrder.push(movingNode.id);
                                     });
                                 }
                                 newOrder.push(nodeId);
-                                if (side === "LEFT" && nodeId === _.last(heavy).id) {
+                                if (side === "LEFT" && nodeId === _.last(green).id) {
                                     _.forEach(moving, movingNode => {
                                         newOrder.push(movingNode.id);
                                     });

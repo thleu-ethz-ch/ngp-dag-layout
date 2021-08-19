@@ -12,9 +12,12 @@ pd.set_option('display.max_columns', None)
 
 with open('../results/performance_breakdown.json') as file:
     original_df = pd.json_normalize(json.load(file))
+    # print relative part of resolve for d_sw1-fused
+    row = original_df[original_df["graph"] == "d_sw1-fused"].groupby("graph").median()
+    print((row["doLayout|orderRanks|doOrder|order|doOrder|resolve"] + row["doLayout|orderRanks|doOrder|insertNodes"]) / row["doLayout"])
     # use one group at a time because we don't know how to reset plt properly
     # POLY, WIDE, TALL, PORT, DSW1
-    for group in ["DSW1"]:
+    for group in ["POLY"]:
         df = original_df.copy()
         if group == "POLY":
             graphs = POLY
@@ -80,4 +83,3 @@ with open('../results/performance_breakdown.json') as file:
         plt.setp(ax.patches, linewidth=0)
         plt.savefig('performance_breakdown_' + group + '.pdf', bbox_inches='tight')
         plt.show()
-

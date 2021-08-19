@@ -11,11 +11,13 @@ matplotlib.rc('text', usetex=True)
 with open('../results/multithreading_ordering.json') as file:
     df = pd.json_normalize(json.load(file))
     df = df.sort_values(['name', 'graph'])
-    df["layouter"] = df["name"].map(lambda name: "-" if "H" in name else ("Multi-threaded" if "M" in name else "Single-threaded"))
+    df["layouter"] = df["name"].map(lambda name: "Multi-threaded" if "M" in name else "Single-threaded")
     df = df[df["layouter"] != "-"]
     df["shuffles"] = df["name"].map(lambda name: int(re.findall('.*S([0-9]+).*', name)[0]))
     df["order"] = df["doLayout|orderRanks"].map(lambda time: time / 1000)
     df = df[df["graph"] != "linformer"]
+
+    print(df.groupby(["graph", "name"]).median())
 
     fig, ax = plt.subplots()
     plt.grid(color='#E0E0E0')

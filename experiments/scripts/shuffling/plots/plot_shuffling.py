@@ -8,6 +8,7 @@ import numpy as np
 from experiments.bench.graphs import *
 
 matplotlib.rc('text', usetex=True)
+matplotlib.rcParams.update({'font.size': 12})
 
 with open('../results/shuffling.json') as file:
     df = pd.json_normalize(json.load(file))
@@ -25,11 +26,11 @@ with open('../results/shuffling.json') as file:
 
     # use one layouter at a time because we don't know how to reset plt properly
     # "SUG-S", "SUG-JS"
-    for layouter in ["SUG-JS"]:
+    for layouter in ["SUG-S"]:
         df = df[df.layouter == layouter]
         fig, ax = plt.subplots()
         plt.grid(color='#E0E0E0')
-        sns.set_theme(style="whitegrid")
+        sns.set_theme(style="whitegrid", font_scale=1.2)
         g = sns.lineplot(
             data=df,
             x="shuffles", y="relative", hue="group"

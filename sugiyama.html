@@ -21,7 +21,7 @@
     <script src="./dist/renderLib.js"></script>
     <script>
         window.addEventListener("load", function () {
-            const options = {compactRanks: true, preorderPorts: true, numShuffles: 0, optimizeAngles: false, bundle: false, webAssembly: false, webWorkers: false, printTimes: false};
+            const options = {compactRanks: true, jointOrder: true, numShuffles: 0, optimizeAngles: false, bundle: false, webAssembly: false, webWorkers: false, printTimes: false};
             const layouter = new renderLib.layouter.SugiyamaLayouter(options);
             const renderer = new renderLib.renderer.PixiRenderer(document.body);
             const graph = (new URLSearchParams(window.location.search)).get('graph');

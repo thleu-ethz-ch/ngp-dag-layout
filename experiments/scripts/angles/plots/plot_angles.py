@@ -11,11 +11,11 @@ with open('../results/angles.json') as file:
     df = pd.json_normalize(json.load(file))
     df["group"] = df["graph"].map(lambda name: "POLY" if name in POLY else ("PORT" if name in PORT else ("TALL" if name in TALL else "WIDE")))
 
-    sns.set_theme(style="whitegrid")
+    sns.set_theme(style="whitegrid", font_scale=1.5)
     g = sns.catplot(
         data=df, kind="bar", legend=False,
         x="group", y="cost", hue="name",
-        ci=False, estimator=sum
+        ci=None, estimator=sum
     )
     g.despine(left=True)
     g.set_axis_labels("", "Cost")

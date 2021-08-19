@@ -50,9 +50,9 @@
             const graphs = layoutLib.Bench.GRAPHS_POLY;
             const layouters = [
                 //["DAG", layoutLib.layouter.DagreLayouter, {}],
-                ["SUG", layoutLib.layouter.SugiyamaLayouter, {preorderPorts: false}],
-                ["SUG-J", layoutLib.layouter.SugiyamaLayouter, {preorderPorts: true}],
-                ["SUG-H", layoutLib.layouter.SugiyamaLayouter, {preorderPorts: true, compactRanks: false}],
+                ["SUG", layoutLib.layouter.SugiyamaLayouter, {jointOrder: false}],
+                ["SUG-J", layoutLib.layouter.SugiyamaLayouter, {jointOrder: true}],
+                ["SUG-H", layoutLib.layouter.SugiyamaLayouter, {jointOrder: true, compactRanks: false}],
                 //["MAG", layoutLib.layouter.MagneticSpringLayouter, {}],
             ];
 

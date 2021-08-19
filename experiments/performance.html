@@ -25,7 +25,7 @@
             const renderer = new renderLib.renderer.SvgRenderer(document.body);
             const options = {};
             options["compactRanks"] = (parseInt(params.get('compactRanks') || "1") === 1);
-            options["preorderPorts"] = (parseInt(params.get('preorderPorts') || "1") === 1);
+            options["jointOrder"] = (parseInt(params.get('jointOrder') || "1") === 1);
             options["numShuffles"] = parseInt(params.get('numShuffles') || "0");
             options["webWorkers"] = (parseInt(params.get('webWorkers') || "0") === 1);
             options["maxWorkers"] = parseInt(params.get('maxWorkers') || "0");

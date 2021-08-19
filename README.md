@@ -1,4 +1,4 @@
-#Scalable Drawing of Nested Directed Acyclic Graphs With Gates and Ports
+# Scalable Drawing of Nested Directed Acyclic Graphs With Gates and Ports
 
 The code in this repository is part of the master thesis of Thomas Leu.
 
@@ -37,7 +37,7 @@ In the following, we describe the options for each layouter.
 
 | **Parameter**            | **Default Value**                   | **Possible Values** | **Description**                                                                                                                                           |
 |--------------------------|-------------------------------------|---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `preorderPorts`          | `true`                              | boolean             | Whether nodes and ports should be jointly preordered. This is always followed by a separate node order and a port order phase.                            |
+| `jointOrder`             | `true`                              | boolean             | Whether nodes and ports should be jointly ordered. This is always followed by a separate node ordering and a port ordering phase.                         |
 | `compactRanks`           | `true`                              | boolean             | Only affects nested graphs. When set to `false`, a pseudo-hierarchical ranking is used. This is typically faster but results in larger drawings.          |
 | `numShuffles`            | `0`                                 | integer             | Number of random permutations from which an ordering attempt is made. Higher numbers result in fewer crossings but increased time.                        |
 | `optimizeAngles`         | `false`                             | boolean             | Whether the distances between ranks should be adjusted to increase the angles of edge crossings.                                                          |

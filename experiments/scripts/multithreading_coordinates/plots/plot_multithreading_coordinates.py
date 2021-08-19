@@ -10,13 +10,13 @@ with open('../results/multithreading_coordinates.json') as file:
     df = pd.json_normalize(json.load(file))
     df = df.sort_values(['name', 'graph'])
     df["graph"] = df["graph"].map(lambda name: r"\textit{" + name + "}")
-    df["layouter"] = df["name"].map(lambda name: "-" if "H" in name else ("Multi-threaded" if "M" in name else "Single-threaded"))
+    df["layouter"] = df["name"].map(lambda name: "Multi-threaded" if "M" in name else "Single-threaded")
     df = df[df["layouter"] != "-"]
     df["time"] = df["doLayout|assignCoordinates|placeSubgraph|assignX"].map(lambda time: time / 1000)
 
     fig, ax = plt.subplots()
 
-    sns.set_theme(style="whitegrid")
+    sns.set_theme(style="whitegrid", font_scale=1.5)
     g = sns.catplot(
         data=df, kind="bar",
         x="graph", y="time", hue="layouter",
@@ -25,7 +25,7 @@ with open('../results/multithreading_coordinates.json') as file:
     g.despine(left=True)
     g.set_axis_labels("", "Time [s]")
     for ax in g.axes.flat:
-        ax.get_yaxis().set_major_formatter(matplotlib.ticker.FuncFormatter(lambda x, p: format(x, ',')))
+        ax.get_yaxis().set_major_formatter(matplotlib.ticker.FuncFormatter(lambda x, p: format(x, '.1f')))
         ax.legend(loc='upper right')
     plt.savefig('multithreading_coordinates.pdf', bbox_inches='tight')
     plt.show()
