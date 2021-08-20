@@ -10,7 +10,7 @@ pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
 
 # use one group at a time because we don't know how to reset plt properly
-# bert, d_sw-1, d_sw1-fused
+# currently, there are only results for bert anyway
 for graph in ["bert"]:
     fig, ax = plt.subplots(figsize=(2, 4.8))
 
@@ -52,14 +52,15 @@ for graph in ["bert"]:
         for step, part in enumerate(["rank", "order", "resolve", "coords"]):
             part_df = pd.DataFrame()
             for i in range(df.shape[0]):
-                row = df.iloc[i].copy()
+                measures = df.iloc[i].copy()
+                row = {}
                 row["layouter"] = "SUG-J"
-                rank = row["doLayout|assignRanks"]
-                order =  row["doLayout|orderRanks"]
-                coords = row["doLayout|assignCoordinates"]
+                rank = measures["doLayout|assignRanks"]
+                order =  measures["doLayout|orderRanks"]
+                coords = measures["doLayout|assignCoordinates"]
                 times = [rank, order, coords, 0]
                 row["time"] = sum(times[0:step+1]) / 1000
-            part_dfs[step] = part_dfs[step].append(row, ignore_index=True)
+                part_dfs[step] = part_dfs[step].append(row, ignore_index=True)
 
     part_dfs.reverse()
     handles = []
@@ -71,7 +72,7 @@ for graph in ["bert"]:
         ))
         handles.append(mpatches.Patch(color=colors[step], label=["other", "coordinate assignment", "ordering", "ranking"][step]))
 
-    if graph == "d_sw1-fused":
+    if graph == "bert":
         plt.legend(handles=handles,  bbox_to_anchor=(1.05, 1), loc=2)
     ax.set_axisbelow(True)
     ax.set_xticklabels(ax.get_xticklabels(), rotation=90)
@@ -81,3 +82,5 @@ for graph in ["bert"]:
     plt.title(r"\textit{" + graph.split("/")[-1].replace('_', r"\_") + r"}")
     plt.savefig('dagre_breakdown_' + graph + '.pdf', bbox_inches='tight')
     plt.show()
+
+    print(part_dfs[3].groupby(["layouter"]).median() / part_dfs[0].groupby(["layouter"]).median())
