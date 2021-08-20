@@ -49,7 +49,6 @@ with open('../results/performance_breakdown.json') as file:
 
         part_dfs = []
         bars = []
-        steps = []
         for step, part in enumerate(["rank", "order", "resolve", "coords"]):
             part_df = pd.DataFrame()
             for i in range(df.shape[0]):
