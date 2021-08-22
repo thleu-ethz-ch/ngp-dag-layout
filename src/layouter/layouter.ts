@@ -226,7 +226,7 @@ export default abstract class Layouter {
 
             // create unscoped layout nodes and assign children (other than the entry) to the scope node
             _.forEach(renderGraph.nodes(), (node: RenderNode) => {
-                if (node.scopeEntry === null) {
+                if (node.scopeEntry === null || renderGraph.node(node.scopeEntry).layoutGraph.parentNode === null || !renderGraph.node(node.scopeEntry).layoutGraph.parentNode.isScopeNode) {
                     if (node.layoutNode) {
                         layoutGraph.addNode(node.layoutGraph.parentNode);
                     } else {
