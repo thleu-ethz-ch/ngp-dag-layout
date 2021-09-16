@@ -1,6 +1,6 @@
 # Scalable Drawing of Nested Directed Acyclic Graphs With Gates and Ports
 
-The code in this repository is part of the master thesis of Thomas Leu.
+The code in this repository is part of the [master thesis](thesis.pdf) of Thomas Leu.
 
 The thesis is based on [Ben-Nun, et al., "Stateful Dataflow Multigraphs - A Data-Centric Model for Performance Portability on Heterogeneous Architectures"](http://www.arxiv.org/abs/1902.10345) and the [SDFG Viewer](https://github.com/spcl/dace-webclient) of the Scalable Parallel Computing Lab, ETH Zurich.
 
@@ -33,7 +33,7 @@ In the following, we describe the options for each layouter.
 | `weightLengths`      | `1`               | float               | Relative weight of the 'edge lengths' penal (neighbors).                                                   |
 | `printTimes`         | `false`           | boolean             | If set to `true`, the console will show how much time the layouter has spent in each step.                 |
 
-### Options Specifict to the SugiyamaLayouter
+### Options Specific to the SugiyamaLayouter
 
 | **Parameter**            | **Default Value**                   | **Possible Values** | **Description**                                                                                                                                           |
 |--------------------------|-------------------------------------|---------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
